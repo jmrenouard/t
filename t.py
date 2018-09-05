@@ -7,7 +7,25 @@ from __future__ import with_statement, print_function
 import os, re, sys, hashlib
 from operator import itemgetter
 from optparse import OptionParser, OptionGroup
+#from colorcodes import Bcolors as bcolors
 
+class bcolors:
+     HEADER = '\033[95m'
+     OKBLUE = '\033[94m'
+     OKGREEN = '\033[92m'
+     WARNING = '\033[93m'
+     FAIL = '\033[91m'
+     ENDC = '\033[0m'
+     BOLD = '\033[1m'
+     UNDERLINE = '\033[4m'
+     STRIKE = '\033[9m'
+
+def color_print(p, s, task):
+    """Add effective color style to tasks list"""
+    if s == 'done':
+        print( p, bcolors.STRIKE +bcolors.OKGREEN+task+bcolors.ENDC)
+    else:
+        print( bcolors.BOLD+p+bcolors.ENDC, bcolors.OKBLUE+task+bcolors.ENDC)
 
 class InvalidTaskfile(Exception):
     """Raised when the path to a task file already exists as a directory."""
@@ -121,7 +139,6 @@ def _prefixes(ids):
         del ps['']
     return ps
 
-
 class TaskDict(object):
     """A set of tasks, both finished and unfinished, for a given list.
 
@@ -215,8 +232,7 @@ class TaskDict(object):
 
         """
         self.tasks.pop(self[prefix]['id'])
-
-
+    
     def print_list(self, kind='tasks', verbose=False, quiet=False, grep=''):
         """Print out a nicely formatted list of unfinished tasks."""
         tasks = dict(getattr(self, kind).items())
@@ -229,8 +245,8 @@ class TaskDict(object):
         plen = max(map(lambda t: len(t[label]), tasks.values())) if tasks else 0
         for _, task in sorted(tasks.items()):
             if grep.lower() in task['text'].lower():
-                p = '%s - ' % task[label].ljust(plen) if not quiet else ''
-                print(p + task['text'])
+                p = '<%s> - ' % task[label].ljust(plen) if not quiet else ''
+                color_print(p, kind, task['text'])
 
     def write(self, delete_if_empty=False):
         """Flush the finished and unfinished tasks to the files on disk."""
@@ -316,6 +332,9 @@ def _main():
         else:
             kind = 'tasks' if not options.done else 'done'
             td.print_list(kind=kind, verbose=options.verbose, quiet=options.quiet,
+                          grep=options.grep)
+
+            td.print_list(kind='done', verbose=options.verbose, quiet=options.quiet,
                           grep=options.grep)
     except AmbiguousPrefix:
         e = sys.exc_info()[1]
